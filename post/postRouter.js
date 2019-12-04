@@ -110,7 +110,22 @@ router.get("/:id", async (req, res) => {
 //if id not found 404, { message: "The post with the specified ID does not exist." }
 //else 500, { error: "The post information could not be retrieved." }
 
-router.get("/:id/comments", (req, res) => {});
+router.get("/:id/comments", (req, res) => {
+ const id = req.params.id;
+ db.findCommentById(id)
+ .then(response => {
+     if (response[0]){
+         res.status(200).json(response);
+     } else {
+         res.status(404).json({ message: "The post with the specified ID does not exist." });
+     }
+ })
+ .catch(err => {
+     console.log(err);
+     res.status(500).json({ error: "The comments information could not be retrieved." });
+ })
+
+});
 //valid
 //if id not found 404, { message: "The post with the specified ID does not exist." }
 //else 500, { error: "The comments information could not be retrieved." }

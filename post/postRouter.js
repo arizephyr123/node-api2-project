@@ -5,9 +5,9 @@ const db = require("../data/db.js");
 
 router.use(express.json());
 
-router.get("/", (req, res) => {
-  res.send("In postRouter");
-});
+// router.get("/", (req, res) => {
+//   res.send("In postRouter");
+// });
 
 router.post("/", (req, res) => {
   const { title, contents } = req.body;
@@ -69,7 +69,19 @@ router.post("/:id/comments", async (req, res) => {
 //if no text, 400, { errorMessage: "Please provide text for the comment." }
 //else 500, { error: "There was an error while saving the comment to the database" }
 
-router.get("/", (req, res) => {});
+router.get("/", (req, res) => {
+  db.find()
+    .then(response => {
+      console.log(response);
+      res.status(200).json(response);
+    })
+    .catch(err => {
+      console.log(err);
+      res
+        .status(500)
+        .json({ error: "The posts information could not be retrieved." });
+    });
+});
 //valid
 //else 500, { error: "The posts information could not be retrieved." }
 

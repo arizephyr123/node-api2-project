@@ -35,26 +35,34 @@ router.post("/", (req, res) => {
 //If no body or title, 400, { errorMessage: "Please provide title and contents for the post." }
 //else 500, { error: "There was an error while saving the post to the database" }
 
-router.post("/:id/comments", (req, res) => {
+router.post("/:id/comments", async (req, res) => {
   const id = req.params.id;
   const newComment = req.body;
-
-  if (!id) {
-    console.log("No ID");
+  if (newComment.text.length < 1) {
     res
-      .status(404)
-      .json({ message: "The post with the specified ID does not exist." });
-  } else {
-    db.insertComment({ ...newComment, post_id: id })
-      .then(response => {
-        console.log(response);
-        res.status(200).json(newComment);
-      })
-      .catch(err => {
-        console.log(err);
-        res.status(500).json;
-      });
+      .status(400)
+      .json({ errorMessage: "Please provide text for the comment." });
   }
+  await db
+    .insertComment({ ...newComment, post_id: id })
+    .then(response => {
+      //if (response.id) {
+      console.log("response,", response);
+      res.status(200).json(newComment);
+      //}
+    })
+    .catch(err => {
+      console.log(err.code);
+      if (err.code === "SQLITE_CONSTRAINT") {
+        res
+          .status(404)
+          .json({ message: "The post with the specified ID does not exist." });
+      } else {
+        res.status(500).json({
+          error: "There was an error while saving the comment to the database"
+        });
+      }
+    });
 });
 //valid 200, save in db, return new comment
 //if id not found, 404, { message: "The post with the specified ID does not exist." }

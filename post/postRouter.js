@@ -17,7 +17,7 @@ router.post("/", (req, res) => {
       errorMessage: "Please provide title and contents for the post."
     });
   } else {
-    db.find()
+    db.insert(req.body)
       .then(response => {
         console.log("POST to '/api/posts' successful");
         res.status(200).json(`{ Post added: ${title}, ${contents}`);
@@ -111,26 +111,60 @@ router.get("/:id", async (req, res) => {
 //else 500, { error: "The post information could not be retrieved." }
 
 router.get("/:id/comments", (req, res) => {
- const id = req.params.id;
- db.findCommentById(id)
- .then(response => {
-     if (response[0]){
-         res.status(200).json(response);
-     } else {
-         res.status(404).json({ message: "The post with the specified ID does not exist." });
-     }
- })
- .catch(err => {
-     console.log(err);
-     res.status(500).json({ error: "The comments information could not be retrieved." });
- })
-
+  const id = req.params.id;
+  db.findCommentById(id)
+    .then(response => {
+      if (response[0]) {
+        res.status(200).json(response);
+      } else {
+        res
+          .status(404)
+          .json({ message: "The post with the specified ID does not exist." });
+      }
+    })
+    .catch(err => {
+      console.log(err);
+      res
+        .status(500)
+        .json({ error: "The comments information could not be retrieved." });
+    });
 });
 //valid
 //if id not found 404, { message: "The post with the specified ID does not exist." }
 //else 500, { error: "The comments information could not be retrieved." }
 
-router.delete("/:id", (req, res) => {});
+router.delete("/:id", async (req, res) => {
+  const id = req.params.id;
+  let toDelete = [];
+  //save the data to delete
+  await db
+    .findById(id)
+    .then(response => {
+      console.log("findById: BEFORE", id, response[0], toDelete);
+      if (response) {
+        toDelete = response;
+        console.log("findById AFTER:", id, response[0], toDelete);
+
+        db.remove(id)
+          .then(removeResponse => {
+            console.log("removeResponse", removeResponse);
+            res.status(200).json(toDelete);
+          })
+          .catch(err => {
+            console.log("db.remove error:", err);
+            // res.status(500).json({ error: "The post could not be removed" });
+          });
+      } else {
+        res
+          .status(404)
+          .json({ message: "The post with the specified ID does not exist." });
+      }
+    })
+    .catch(err => {
+      console.log("GET in DELETE to /posts/:id", err);
+      res.status(500).json({ error: "The post could not be removed FINAL" });
+    });
+});
 //valid 204
 //if id not found 404, { message: "The post with the specified ID does not exist." }
 //else 500, { error: "The post could not be removed" }

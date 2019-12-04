@@ -141,7 +141,7 @@ router.delete("/:id", async (req, res) => {
     .findById(id)
     .then(response => {
       console.log("findById: BEFORE", id, response[0], toDelete);
-      if (response) {
+      if (response[0]) {
         toDelete = response;
         console.log("findById AFTER:", id, response[0], toDelete);
 
@@ -169,10 +169,46 @@ router.delete("/:id", async (req, res) => {
 //if id not found 404, { message: "The post with the specified ID does not exist." }
 //else 500, { error: "The post could not be removed" }
 
-router.put("/:id", (req, res) => {});
+router.put("/:id", async (req, res) => {
+  const id = req.params.id;
+  const post = req.body;
+  if (!post.title || !post.contents) {
+    res
+      .status(400)
+      .json({
+        errorMessage: "Please provide title and contents for the post."
+      });
+  } else {
+    await db.findById(id)
+      .then(response => {
+        //console.log("findById", id, response);
+        if (response) {
+
+          db.update(id, post)
+            .then(updateResponse => {
+              res.status(200).json(response);
+            })
+            .catch(err => {
+                console.log(err);
+          res.status(500).json({ error: "The post information could not be modified." });
+            });
+        } else {
+          res
+            .status(404)
+            .json({
+              message: "The post with the specified ID does not exist."
+            });
+        }
+      })
+      .catch(err => {
+          console.log(err);
+          res.status(500).json({ error: "The post information could not be modified." });
+      });
+  }
+});
 //valid, 200, return update db, return updated post
 // if id not found 404, { message: "The post with the specified ID does not exist." }
 // if missing title or contents, 400, { errorMessage: "Please provide title and contents for the post." }
-//else 5-- , { error: "The post information could not be modified." }
+//else 500 , { error: "The post information could not be modified." }
 
 module.exports = router; // << export router
